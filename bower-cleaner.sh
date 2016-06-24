@@ -27,24 +27,64 @@ if [ ! -d bower_components ]; then
 	exit 1
 fi
 
-### cp usable formats
-cp -r --parents `find bower_components -type f -regextype sed -regex ".*\.\(js\|css\|eot\|svg\|ttf\|woff\|woff2\)"` $INSTALL_DIR
+### Delete existing bower_components
+echo $INSTALL_DIR/bower_components
+read -p "I want to delete these files(y,n): " answer
+if [ "$answer" = "y" ]; then
+	rm -rf $INSTALL_DIR/bower_components
+else
+	exit 1
+fi
+### Copy new bower_components
+cp -r bower_components $INSTALL_DIR
+cd $INSTALL_DIR/bower_components
+
+### Delete unnecessary files
+find . -type f -regextype sed ! -regex ".*\.\(js\|css\|eot\|svg\|ttf\|woff\|woff2\)"
+read -p "I want to delete these files(y,n): " answer
+if [ "$answer" = "y" ]; then
+	rm `find . -type f -regextype sed ! -regex ".*\.\(js\|css\|eot\|svg\|ttf\|woff\|woff2\)"`
+else
+	exit 1
+fi
 
 ### Get dist folders
-cd $INSTALL_DIR/bower_components
 for component in `ls -d *`; do
 	cd $component
 	if find . -maxdepth 1 -type d -iname dist | egrep ".*" > /dev/null 2>&1; then
-		find . -maxdepth 1 ! -iname dist ! -path . -exec rm -r {} \;
+		echo $component
+		find . -maxdepth 1 ! -iname dist ! -path .
+		read -p "I want to delete these files(y,n): " answer
+		if [ "$answer" = "y" ]; then
+			find . -maxdepth 1 ! -iname dist ! -path . -exec rm -r {} \;
+		else
+			exit 1
+		fi
+	echo "---"
 	else
 		echo "$component has no dist directory"
+		echo "---"
 	fi
 	cd ..
 done
 
 ### Delete not min files
-rm `find . -type f -iname "*min*" | sed 's/.min//g'` > /dev/null 2>&1
+find . -type f -iname "*min*" | sed 's/.min//g'
+read -p "I want to delete these files(y,n): " answer
+if [ "$answer" = "y" ]; then
+	rm `find . -type f -iname "*min*" | sed 's/.min//g'` > /dev/null 2>&1
+else
+	exit 1
+fi
+
 
 ### Delete demo directories
-rm -r `find . -type d -iname "demo"`
+find . -type d -iname "demo"
+read -p "I want to delete these files(y,n): " answer
+if [ "$answer" = "y" ]; then 
+	rm -r `find . -type d -iname "demo"`
+else
+        exit 1
+fi
+
 exit 0
