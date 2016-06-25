@@ -39,27 +39,16 @@ fi
 cp -r bower_components $INSTALL_DIR
 cd $INSTALL_DIR/bower_components
 
-### Delete unnecessary files
+### Find unnecessary files
 find . -type f -regextype sed ! -regex ".*\.\(js\|css\|eot\|svg\|ttf\|woff\|woff2\)"
-read -p "I want to delete these files(y,n): " answer
-if [ "$answer" = "y" ]; then
-	rm `find . -type f -regextype sed ! -regex ".*\.\(js\|css\|eot\|svg\|ttf\|woff\|woff2\)"`
-else
-	exit 1
-fi
 
-### Get dist folders
+
+### Find dist folders
 for component in `ls -d *`; do
 	cd $component
 	if find . -maxdepth 1 -type d -iname dist | egrep ".*" > /dev/null 2>&1; then
 		echo $component
 		find . -maxdepth 1 ! -iname dist ! -path .
-		read -p "I want to delete these files(y,n): " answer
-		if [ "$answer" = "y" ]; then
-			find . -maxdepth 1 ! -iname dist ! -path . -exec rm -r {} \;
-		else
-			exit 1
-		fi
 	echo "---"
 	else
 		echo "$component has no dist directory"
@@ -68,23 +57,34 @@ for component in `ls -d *`; do
 	cd ..
 done
 
-### Delete not min files
+### Find not min files
 find . -type f -iname "*min*" | sed 's/.min//g'
+
+
+### Find demo directories
+find . -type d -iname "demo"
+
 read -p "I want to delete these files(y,n): " answer
 if [ "$answer" = "y" ]; then
-	rm `find . -type f -iname "*min*" | sed 's/.min//g'` > /dev/null 2>&1
-else
-	exit 1
-fi
+	### Delete unnecessary files
+	rm `find . -type f -regextype sed ! -regex ".*\.\(js\|css\|eot\|svg\|ttf\|woff\|woff2\)"`
+	### Delete not dist folders
+	for component in `ls -d *`; do
+	cd $component
+	if find . -maxdepth 1 -type d -iname dist | egrep ".*" > /dev/null 2>&1; then
+		find . -maxdepth 1 ! -iname dist ! -path . -exec rm -r {} \;
+	fi
+	cd ..
+done
 
+### Delete not min files
+rm `find . -type f -iname "*min*" | sed 's/.min//g'` > /dev/null 2>&1
 
 ### Delete demo directories
-find . -type d -iname "demo"
-read -p "I want to delete these files(y,n): " answer
-if [ "$answer" = "y" ]; then 
-	rm -r `find . -type d -iname "demo"`
+rm -r `find . -type d -iname "demo"`
+	
 else
-        exit 1
+	exit 1
 fi
 
 exit 0
